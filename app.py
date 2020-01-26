@@ -86,7 +86,7 @@ class StudentCourses(Resource):
         res = EnrollCourse(student_id, courses)
         if res['successful'] == True:
             return Response(status=204)
-        return {'faultyCourse': res['faultyCourse']}, 400
+        return {'errorMessages': res['errorMessages']}, 400
 
 
 class Exams(Resource):
