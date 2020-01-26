@@ -1,5 +1,6 @@
 import os.path
 import sqlite3
+from Repository.Helper import *
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "mahestan.db")
@@ -8,7 +9,7 @@ DB_PATH = os.path.join(BASE_DIR, "mahestan.db")
 def EnrollCourse(student_id, courses):
     connection = sqlite3.connect(DB_PATH)
     cursor = connection.cursor()
-    faulty_courses = []
+    error_messages = []
     for i in range(len(courses)):
         current_iteration = courses[i]
         try:
@@ -19,11 +20,13 @@ def EnrollCourse(student_id, courses):
             cursor.execute(query)
             connection.commit()
         except:
-            faulty_courses.append(current_iteration)
+            temp = Interference(student_id,current_iteration)
+            for record in temp:
+                error_messages.append(record[0])
     connection.close()
-    if len(faulty_courses) > 0:
+    if len(error_messages) > 0:
         return {'successful': False,
-                'faultyCourse': faulty_courses}
+                'errorMessages': error_messages}
     return {'successful': True}
 
 

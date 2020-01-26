@@ -92,3 +92,42 @@ def Hour(hour):
     if '.5' in hour:
         return hour.replace('.5', ':30')
     return hour.replace('.0', ':00')
+
+def Interference(student_id,course_id):
+    connection = sqlite3.connect(DB_PATH)
+    cursor = connection.cursor()
+    query = """
+    SELECT DISTINCT 'درس ' || X.name || ' با درس ' || Y.name || ' تداخل دارد.' AS error_message
+        FROM (SELECT C.name          AS name,
+             S.week_day      AS session_week_day,
+             S.starting_time AS session_starting_time,
+             S.ending_time   AS session_ending_time,
+             E.date          AS exam_date,
+             E.starting_time AS exam_starting_time,
+             E.ending_time   AS exam_ending_time
+      FROM Course C
+               INNER JOIN Session S ON C.id = S.course
+               INNER JOIN Exam E ON C.id = E.course
+      WHERE S.course = '{}') X,
+     (SELECT C.name          AS name,
+             S.week_day      AS session_week_day,
+             S.starting_time AS session_starting_time,
+             S.ending_time   AS session_ending_time,
+             E.date          AS exam_date,
+             E.starting_time AS exam_starting_time,
+             E.ending_time   AS exam_ending_time
+      FROM Course C
+               INNER JOIN Student_Course SC ON C.id = SC.course
+               INNER JOIN Session S ON SC.course = S.course
+               INNER JOIN Exam E ON C.id = E.course
+      WHERE SC.student = '{}') Y
+    WHERE (X.session_week_day = Y.session_week_day
+    AND X.session_starting_time >= Y.session_starting_time
+    AND X.session_ending_time <= Y.session_ending_time)
+   OR (X.exam_date = Y.exam_date
+    AND X.exam_starting_time >= Y.exam_starting_time
+    AND X.exam_ending_time <= Y.exam_ending_time);
+    """.format(course_id,student_id)
+    db_out = cursor.execute(query).fetchall()
+    connection.close()
+    return db_out
